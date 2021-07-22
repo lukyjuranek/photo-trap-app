@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "PhotoTrapApp",
-    "slug": "PhotoTrapApp",
+    "name": "photo-trap-app",
+    "slug": "photo-trap-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "assetBundlePatterns": [
       "**/*"
     ]
   },
-  "name": "PhotoTrapApp"
+  "name": "photo-trap-app"
 }

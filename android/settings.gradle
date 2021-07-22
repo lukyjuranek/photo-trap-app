@@ -1,4 +1,4 @@
-rootProject.name = 'PhotoTrapApp'
+rootProject.name = 'photo-trap-app'
 
 apply from: '../node_modules/react-native-unimodules/gradle.groovy'
 includeUnimodulesProjects()

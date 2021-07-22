@@ -1,10 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions, ToastAndroid,
+	Platform,
+	AlertIOS,
+} from 'react-native';
+import { NavigationContainer, useIsFocused  } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
 import { ceil } from 'react-native-reanimated';
+import * as SQLite from 'expo-sqlite';
 
 
 var thumbnail_img = require('./img/example-img.jpg');
@@ -13,10 +18,26 @@ var camera_img = require('./img/camera.png');
 var delete_img = require('./img/delete.png');
 var plus_img = require('./img/plus.png');
 var aperture_img = require('./img/aperture.png');
+var save_img = require('./img/save.png');
+var cancel_img = require('./img/cancel.png');
 
 const Stack = createStackNavigator();
 
+const db = SQLite.openDatabase('MainDB', () => { console.log(error) });
+
 export default function App() {
+	const createTable = () => {
+		db.transaction((tx) => {
+			tx.executeSql(
+				"CREATE TABLE IF NOT EXISTS "
+				+ "Items "
+				+ "(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Image TEXT);", [],
+				(tx, results) => { console.log("Table created successfully") },
+				(tx, err) => { console.log("Error when creating table") });
+		});
+	};
+
+	createTable();
 	return (
 		<NavigationContainer>
 			<Stack.Navigator>
@@ -35,15 +56,83 @@ export default function App() {
 	);
 }
 
+
+
+const removeItem = () => {
+	null;
+};
+
+// <MainScreen /> component
 const MainScreen = ({ navigation }) => {
+
+	const [items, setItems] = useState([]);
+	
+	const isFocused = useIsFocused();
+	
+	// Runs when items focused
+	React.useEffect(() => {
+		console.log("Use effect");
+		getData();
+		// setItems(getData());
+		// console.log("Test", typeof (items));
+		console.log(items.length);
+	}, [isFocused]);
+
+	const addItem = (name, img) => {
+		try {
+			db.transaction(
+				(tx) => {
+					tx.executeSql("INSERT INTO Items (Name, Image) VALUES (?, ?)",
+						[name, img],
+						(tx, results) => {
+							console.log('Rows affected: ', results.rowsAffected);
+							if (results.rowsAffected > 0) {
+								console.log('Data Inserted Successfully....');
+							} else console.log('Failed....');
+						}
+					),
+						(tx, error) => {
+							console.log("Could not execute query");
+						};
+				}, (err) => {
+					console.log("Error1")
+				}, () => {
+					console.log("Success")
+				}
+			);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const getData = async () => {
+		try {
+			await db.transaction(
+				async (tx) => {
+					await tx.executeSql(
+						"SELECT ID, Name, Image from Items",
+						[],
+						(tx, results) => {
+							var temp = [];
+							for (let i = 0; i < results.rows.length; ++i)
+								temp.push(results.rows.item(i));
+							setItems(temp);
+						}
+					)
+				})
+		} catch (error) {
+			console.log(error);
+		};
+	};
+
 	return (
 		<SafeAreaView style={{ flex: 1 }}>
 			<View style={styles.container}>
 				<ImageBackground source={require('./img/bg-img.jpg')} style={styles.imagebackground} resizeMode='repeat'>
 
-					{/* Add button */}
+					{/* Top bar */}
 					<View style={styles.topPanel}>
-						<Text style={{ fontSize: 30, color: 'white' }}>Photo Trap</Text>
+						<Text style={{ fontSize: 30, color: 'white', fontWeight: 'bold' }}>Photo Trap</Text>
 						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => navigation.navigate('Settings')}>
 							<Image style={{ height: 30, width: 30 }} source={settings_img} />
 						</TouchableOpacity>
@@ -51,20 +140,16 @@ const MainScreen = ({ navigation }) => {
 
 					{/* List of items */}
 					<ScrollView style={styles.scrollview} overScrollMode='never'>
-						<TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Camera')}>
+						{/* Add button */}
+						<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
 							<Image source={plus_img} style={{ height: 50, width: 50, }} />
-							<Text style={{ fontSize: 20, color: 'grey', flexGrow: 2, marginLeft: 20 }}>...</Text>
+							<Text style={{ fontSize: 20, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
 						</TouchableOpacity>
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-						<Item img={thumbnail_img} date='Jan 28, 2021 12:33 PM' />
-
+						{
+							items.map((item, key) => {
+								return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={key} />);
+							})
+						}
 						<View style={{ height: 100 }}></View>
 					</ScrollView>
 				</ImageBackground>
@@ -73,9 +158,13 @@ const MainScreen = ({ navigation }) => {
 	);
 }
 
+// <CameraScreen /> component
 const CameraScreen = () => {
+	const cameraRef = useRef();
 	const [hasPermission, setHasPermission] = useState(null);
 	const [type, setType] = useState(Camera.Constants.Type.back);
+	const [imgBase64, setImgBase64] = useState('');
+	const [isPreview, setIsPreview] = useState(false);
 
 	useEffect(() => {
 		(async () => {
@@ -91,38 +180,108 @@ const CameraScreen = () => {
 		return <Text>No access to camera</Text>;
 	}
 
+	const addItem = (name, img) => {
+		try {
+			db.transaction(
+				(tx) => {
+					// console.log(name, img);
+					tx.executeSql("INSERT INTO Items (Name, Image) VALUES (?, ?)",
+						[name, img],
+						(tx, results) => {
+							console.log('Rows affected: ', results.rowsAffected);
+							if (results.rowsAffected > 0) {
+								console.log('Data Inserted Successfully....');
+							} else console.log('Failed....');
+						}
+					),
+						(tx, error) => {
+							console.log("Could not execute query");
+						};
+				}, (tx, err) => {
+					console.log("Error2")
+				}, () => {
+					console.log("Success")
+				}
+			);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const onSnap = async () => {
+		if (cameraRef.current) {
+			const options = { quality: 0.7, base64: true };
+			const data = await cameraRef.current.takePictureAsync(options);
+			const source = data.base64;
+			setImgBase64(source);
+
+			if (source) {
+				await cameraRef.current.pausePreview();
+				setIsPreview(true);
+			}
+		}
+	};
+
+
+	const getCurrentDateAndTime = () => {
+		const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+		const d = new Date();
+		var date = d.getDate(); //To get the Current Date
+		var month = monthNames[d.getMonth()]; //To get the Current Month
+		var year = d.getFullYear(); //To get the Current Year
+		var hours = d.getHours(); //To get the Current Hours
+		var min = d.getMinutes(); //To get the Current Minutes
+		return date + " " + month + ", " + year + " " + hours + ":" + min;
+	}
+
+	function notifyMessage(msg) {
+		if (Platform.OS === 'android') {
+			ToastAndroid.show(msg, ToastAndroid.SHORT)
+		} else {
+			AlertIOS.alert(msg);
+		}
+	}
+
+	const stopPreview = async () => {
+		await cameraRef.current.resumePreview();
+		setIsPreview(false);
+	}
+
+	const saveImage = () => {
+		addItem(getCurrentDateAndTime(), imgBase64);
+		stopPreview();
+		notifyMessage("Image saved successfully");
+	}
 
 	return (
-		<View style={{ flex: 1, backgroundColor:'#202020' }}>
-			<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"}>
+		<View style={{ flex: 1, backgroundColor: '#202020' }}>
+			<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
 			</Camera>
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
-				<TouchableOpacity>
-					<Image style={{ height: 60, width: 60 }} source={aperture_img} />
-				</TouchableOpacity>
+				{isPreview
+					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}><TouchableOpacity onPress={saveImage}><Image style={{ height: 60, width: 60 }} source={save_img} /></TouchableOpacity><TouchableOpacity onPress={stopPreview}><Image style={{ height: 60, width: 60 }} source={cancel_img} /></TouchableOpacity></View>
+					: <TouchableOpacity onPress={onSnap}><Image style={{ height: 60, width: 60 }} source={aperture_img} /></TouchableOpacity>
+				}
 			</View>
 		</View>
 	);
 }
 
+// <SettingsScreen /> component
 const SettigsScreen = () => {
 	return (
 		<Text style={{ fontSize: 30 }}>Settings screen</Text>
 	);
 }
 
-const PreviewScreen = () => {
-	return (
-		<Text style={{ fontSize: 30 }}>Preview screen</Text>
-	);
-}
-
+// <Compare screen /> component
 const CompareScreen = () => {
 	return (
 		<Text style={{ fontSize: 30 }}>Compare screen</Text>
 	);
 }
 
+// <Item /> component
 const Item = (props) => {
 	const showConfirmDialog = (text) => {
 		return Alert.alert(
@@ -148,7 +307,7 @@ const Item = (props) => {
 	};
 	return (
 		<View style={styles.item}>
-			<Image source={props.img} style={styles.img} />
+			<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
 			<Text style={{ fontSize: 15, color: 'black', flexGrow: 2, marginLeft: 20 }}>{props.date}</Text>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
 				<Image style={{ height: 30, width: 30 }} source={delete_img} />
@@ -169,7 +328,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		marginTop: 50,
+		marginTop: 60,
 		marginHorizontal: 20
 	},
 	item: {
@@ -183,7 +342,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: 'white',
 		margin: 0,
-		marginTop: 80,
+		marginTop: 60,
 		padding: 20,
 		borderTopLeftRadius: 30,
 		borderTopRightRadius: 30,

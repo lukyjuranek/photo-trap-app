@@ -10,6 +10,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
 import { ceil } from 'react-native-reanimated';
 import * as SQLite from 'expo-sqlite';
+import { Ionicons, AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 
 
 var thumbnail_img = require('./img/example-img.jpg');
@@ -32,8 +33,12 @@ export default function App() {
 				"CREATE TABLE IF NOT EXISTS "
 				+ "Items "
 				+ "(ID INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Image TEXT);", [],
-				(tx, results) => { console.log("Table created successfully") },
-				(tx, err) => { console.log("Error when creating table") });
+				(tx, results) => {
+					// console.log("Table created successfully")
+				},
+				(tx, err) => {
+					console.error("Error when creating table")
+				});
 		});
 	};
 
@@ -71,11 +76,11 @@ const MainScreen = ({ navigation }) => {
 	
 	// Runs when items focused
 	React.useEffect(() => {
-		console.log("Use effect");
+		// console.log("Use effect");
 		getData();
 		// setItems(getData());
 		// console.log("Test", typeof (items));
-		console.log(items.length);
+		// console.log(items.length);
 	}, [isFocused]);
 
 	const addItem = (name, img) => {
@@ -92,16 +97,16 @@ const MainScreen = ({ navigation }) => {
 						}
 					),
 						(tx, error) => {
-							console.log("Could not execute query");
+							console.error("Could not execute query");
 						};
 				}, (err) => {
-					console.log("Error1")
+					console.error("Error1")
 				}, () => {
 					console.log("Success")
 				}
 			);
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	};
 
@@ -134,7 +139,8 @@ const MainScreen = ({ navigation }) => {
 					<View style={styles.topPanel}>
 						<Text style={{ fontSize: 30, color: 'white', fontWeight: 'bold' }}>Photo Trap</Text>
 						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => navigation.navigate('Settings')}>
-							<Image style={{ height: 30, width: 30 }} source={settings_img} />
+							{/* <Image style={{ height: 30, width: 30 }} source={settings_img} /> */}
+							<Ionicons name="settings-outline" size={30} color="white" />
 						</TouchableOpacity>
 					</View>
 
@@ -142,12 +148,13 @@ const MainScreen = ({ navigation }) => {
 					<ScrollView style={styles.scrollview} overScrollMode='never'>
 						{/* Add button */}
 						<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
-							<Image source={plus_img} style={{ height: 50, width: 50, }} />
+							<AntDesign name="plussquareo" size={50} color="gray" />
+							{/* <Image source={plus_img} style={{ height: 50, width: 50, }} /> */}
 							<Text style={{ fontSize: 20, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
 						</TouchableOpacity>
 						{
 							items.map((item, key) => {
-								return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={key} />);
+								return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} />);
 							})
 						}
 						<View style={{ height: 100 }}></View>
@@ -191,20 +198,20 @@ const CameraScreen = () => {
 							console.log('Rows affected: ', results.rowsAffected);
 							if (results.rowsAffected > 0) {
 								console.log('Data Inserted Successfully....');
-							} else console.log('Failed....');
+							} else console.error('Failed....');
 						}
 					),
 						(tx, error) => {
-							console.log("Could not execute query");
+							console.error("Could not execute query");
 						};
 				}, (tx, err) => {
-					console.log("Error2")
+					console.error("Error2")
 				}, () => {
 					console.log("Success")
 				}
 			);
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	};
 
@@ -283,6 +290,36 @@ const CompareScreen = () => {
 
 // <Item /> component
 const Item = (props) => {
+
+	const removeItem = (id) => {
+		try {
+			db.transaction(
+				(tx) => {
+					tx.executeSql("DELETE FROM Items WHERE ID=?",
+						[id],
+						(tx, results) => {
+							console.log('Rows affected: ', results.rowsAffected);
+							if (results.rowsAffected > 0) {
+								console.log('Item removed successfully....');
+							} else console.error('Failed....');
+						}
+					),
+						(tx, error) => {
+							console.error("Could not execute query");
+						};
+				}, (err) => {
+					console.error("Error")
+				}, () => {
+					console.log("Success")
+				}
+			);
+		} catch (error) {
+			console.error(error);
+		}
+
+		props.refresh();
+	};
+
 	const showConfirmDialog = (text) => {
 		return Alert.alert(
 			"Are you sure?",
@@ -293,7 +330,8 @@ const Item = (props) => {
 					text: "Yes",
 					onPress: () => {
 						// setShowBox(false);
-						var x = 0;
+						removeItem(props.id);
+						console.log("Delete item with ID: ",props.id);
 					},
 					style: 'destructive'
 				},
@@ -309,8 +347,12 @@ const Item = (props) => {
 		<View style={styles.item}>
 			<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
 			<Text style={{ fontSize: 15, color: 'black', flexGrow: 2, marginLeft: 20 }}>{props.date}</Text>
+			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2}>
+				<MaterialIcons name="compare" size={20} color="black" style={{paddingRight:15}} />
+			</TouchableOpacity>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
-				<Image style={{ height: 30, width: 30 }} source={delete_img} />
+				{/* <Image style={{ height: 30, width: 30 }} source={delete_img} /> */}
+				<Feather name="trash" size={20} color="red" />
 			</TouchableOpacity>
 		</View>
 	);

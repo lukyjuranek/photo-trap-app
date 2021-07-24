@@ -162,7 +162,7 @@ const MainScreen = ({ navigation }) => {
 							</TouchableOpacity>
 							{
 								items.map((item, key) => {
-									return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} compare={() => {
+									return (<Item img={item.Image} date={item.Name} key={item.ID} id={item.ID} refresh={getData} compare={() => {
 										navigation.navigate('Compare', {
 											itemId: item.ID,
 										})
@@ -381,12 +381,11 @@ const CompareScreen = ({ route, navigation }) => {
 				<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
 				</Camera>
 				<Image style={{ opacity, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
-				{/* <View style={{ backgroundColor:'red', position: 'absolute', top: 0, left: 0, height: Dimensions.get('window').width * 4 / 3, width: '100%' }}></View> */}
 			</View>
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
 				{isPreview
 					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
-						<TouchableOpacity onPressIn={ ()=> setOpacity(0) } onPressOut={ () => setOpacity(1)} style={{ flex: 1, alignItems: 'center' }}>
+						<TouchableOpacity onPressIn={() => setOpacity(0)} onPressOut={() => setOpacity(1)} style={{ flex: 1, alignItems: 'center' }}>
 							<MaterialIcons name="compare" size={50} color="white" />
 							<Text style={{ color: 'white', textAlign: 'center' }}>Compare</Text>
 						</TouchableOpacity>
@@ -397,8 +396,8 @@ const CompareScreen = ({ route, navigation }) => {
 					</View>
 					: <View style={{ flex: 1, justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row' }}>
 						<Slider
-						onValueChange={ value => setOpacity(value)}
-						value={opacity}
+							onValueChange={ value => setOpacity(value) }
+							value={opacity}
 							style={{ width: 180, height: 40 }}
 							step={0.1}
 							minimumValue={0}

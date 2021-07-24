@@ -21,6 +21,10 @@ var aperture_img = require('./img/aperture.png');
 var save_img = require('./img/save.png');
 var cancel_img = require('./img/cancel.png');
 
+// TODO:
+// - remove unused imports and commented javascript
+// - try increasing the photo quality without getting the "Row too big to fit into CursorWindow" error
+
 const Stack = createStackNavigator();
 
 const db = SQLite.openDatabase('MainDB', () => { console.log(error) });
@@ -97,7 +101,7 @@ const MainScreen = ({ navigation }) => {
 						}
 					),
 						(tx, error) => {
-							console.error("Could not execute query");
+							console.error("Could not execute query" + error);
 						};
 				}, (err) => {
 					console.error("Error1")
@@ -111,6 +115,7 @@ const MainScreen = ({ navigation }) => {
 	};
 
 	const getData = async () => {
+		console.log('getData');
 		try {
 			await db.transaction(
 				async (tx) => {
@@ -122,6 +127,10 @@ const MainScreen = ({ navigation }) => {
 							for (let i = 0; i < results.rows.length; ++i)
 								temp.push(results.rows.item(i));
 							setItems(temp);
+							console.log("getData() succesfull");
+						},
+						(tx, error) => {
+							console.error("Could not execute query" + error);
 						}
 					)
 				})
@@ -132,6 +141,12 @@ const MainScreen = ({ navigation }) => {
 
 	return (
 		<SafeAreaView style={{ flex: 1 }}>
+
+			{Platform.OS === 'android'
+				? <StatusBar barStyle={'light-content'} />
+				: <StatusBar barStyle={'dark-content'} />
+			}
+
 			<View style={styles.container}>
 				<ImageBackground source={bg_img} style={styles.imagebackground} resizeMode='cover'>
 
@@ -146,20 +161,20 @@ const MainScreen = ({ navigation }) => {
 
 					{/* List of items */}
 					<View style={styles.whitePanel}>
-					<ScrollView style={styles.scrollview} overScrollMode='never'>
-						{/* Add button */}
-						<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
-							<MaterialIcons name="add-a-photo" size={30} color="gray" style={{ padding: 10 }} />
-							{/* <Image source={plus_img} style={{ height: 50, width: 50, }} /> */}
-							<Text style={{ fontSize: 15, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
-						</TouchableOpacity>
-						{
-							items.map((item, key) => {
-								return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} />);
-							})
-						}
-						<View style={{ height: 100 }}></View>
-					</ScrollView>
+						<ScrollView style={styles.scrollview} overScrollMode='never'>
+							{/* Add button */}
+							<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
+								<MaterialIcons name="add-a-photo" size={30} color="gray" style={{ padding: 10 }} />
+								{/* <Image source={plus_img} style={{ height: 50, width: 50, }} /> */}
+								<Text style={{ fontSize: 15, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
+							</TouchableOpacity>
+							{
+								items.map((item, key) => {
+									return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} />);
+								})
+							}
+							<View style={{ height: 100 }}></View>
+						</ScrollView>
 					</View>
 				</ImageBackground>
 			</View>
@@ -219,7 +234,8 @@ const CameraScreen = () => {
 
 	const onSnap = async () => {
 		if (cameraRef.current) {
-			const options = { quality: 1, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality.
+			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
+			// value over 0.7 throws an error: Row too big to fit into CursorWindow
 			const data = await cameraRef.current.takePictureAsync(options);
 			const source = data.base64;
 			setImgBase64(source);
@@ -398,9 +414,9 @@ const styles = StyleSheet.create({
 		// },
 		// shadowOpacity: 0.58,
 		// shadowRadius: 16.00,
-		
+
 		// elevation: 24,
-		
+
 	},
 	scrollview: {
 		flex: 1,

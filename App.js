@@ -1,18 +1,17 @@
-import { StatusBar } from 'expo-status-bar';
+// import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, useRef } from 'react';
 import {
 	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions, ToastAndroid,
-	Platform,
-	AlertIOS,
+	Platform, StatusBar
 } from 'react-native';
-import { NavigationContainer, useIsFocused  } from '@react-navigation/native';
+import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
 import { ceil } from 'react-native-reanimated';
 import * as SQLite from 'expo-sqlite';
-import { Ionicons, AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, AntDesign, Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-
+var bg_img = require('./img/bg-img1.png');
 var thumbnail_img = require('./img/example-img.jpg');
 var settings_img = require('./img/settings.png');
 var camera_img = require('./img/camera.png');
@@ -27,6 +26,7 @@ const Stack = createStackNavigator();
 const db = SQLite.openDatabase('MainDB', () => { console.log(error) });
 
 export default function App() {
+	StatusBar.setBarStyle('dark-content', true);
 	const createTable = () => {
 		db.transaction((tx) => {
 			tx.executeSql(
@@ -71,9 +71,9 @@ const removeItem = () => {
 const MainScreen = ({ navigation }) => {
 
 	const [items, setItems] = useState([]);
-	
+
 	const isFocused = useIsFocused();
-	
+
 	// Runs when items focused
 	React.useEffect(() => {
 		// console.log("Use effect");
@@ -133,7 +133,7 @@ const MainScreen = ({ navigation }) => {
 	return (
 		<SafeAreaView style={{ flex: 1 }}>
 			<View style={styles.container}>
-				<ImageBackground source={require('./img/bg-img.jpg')} style={styles.imagebackground} resizeMode='repeat'>
+				<ImageBackground source={bg_img} style={styles.imagebackground} resizeMode='cover'>
 
 					{/* Top bar */}
 					<View style={styles.topPanel}>
@@ -145,12 +145,13 @@ const MainScreen = ({ navigation }) => {
 					</View>
 
 					{/* List of items */}
+					<View style={styles.whitePanel}>
 					<ScrollView style={styles.scrollview} overScrollMode='never'>
 						{/* Add button */}
 						<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
-							<AntDesign name="plussquareo" size={50} color="gray" />
+							<MaterialIcons name="add-a-photo" size={30} color="gray" style={{ padding: 10 }} />
 							{/* <Image source={plus_img} style={{ height: 50, width: 50, }} /> */}
-							<Text style={{ fontSize: 20, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
+							<Text style={{ fontSize: 15, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
 						</TouchableOpacity>
 						{
 							items.map((item, key) => {
@@ -159,6 +160,7 @@ const MainScreen = ({ navigation }) => {
 						}
 						<View style={{ height: 100 }}></View>
 					</ScrollView>
+					</View>
 				</ImageBackground>
 			</View>
 		</SafeAreaView>
@@ -217,7 +219,7 @@ const CameraScreen = () => {
 
 	const onSnap = async () => {
 		if (cameraRef.current) {
-			const options = { quality: 0.7, base64: true };
+			const options = { quality: 1, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality.
 			const data = await cameraRef.current.takePictureAsync(options);
 			const source = data.base64;
 			setImgBase64(source);
@@ -245,7 +247,7 @@ const CameraScreen = () => {
 		if (Platform.OS === 'android') {
 			ToastAndroid.show(msg, ToastAndroid.SHORT)
 		} else {
-			AlertIOS.alert(msg);
+			Alert.alert(msg);
 		}
 	}
 
@@ -266,8 +268,18 @@ const CameraScreen = () => {
 			</Camera>
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
 				{isPreview
-					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}><TouchableOpacity onPress={saveImage}><Image style={{ height: 60, width: 60 }} source={save_img} /></TouchableOpacity><TouchableOpacity onPress={stopPreview}><Image style={{ height: 60, width: 60 }} source={cancel_img} /></TouchableOpacity></View>
-					: <TouchableOpacity onPress={onSnap}><Image style={{ height: 60, width: 60 }} source={aperture_img} /></TouchableOpacity>
+					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
+						<TouchableOpacity onPress={saveImage}>
+							<MaterialIcons name='save' size={50} color='white' />
+							<Text style={{ color: 'white', textAlign: 'center' }}>Save</Text>
+						</TouchableOpacity><TouchableOpacity onPress={stopPreview}>
+							<MaterialIcons name='cancel' size={50} color='white' />
+							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
+						</TouchableOpacity>
+					</View>
+					: <TouchableOpacity onPress={onSnap}>
+						<MaterialIcons name='camera' size={60} color='white' />
+					</TouchableOpacity>
 				}
 			</View>
 		</View>
@@ -331,7 +343,7 @@ const Item = (props) => {
 					onPress: () => {
 						// setShowBox(false);
 						removeItem(props.id);
-						console.log("Delete item with ID: ",props.id);
+						console.log("Delete item with ID: ", props.id);
 					},
 					style: 'destructive'
 				},
@@ -348,7 +360,7 @@ const Item = (props) => {
 			<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
 			<Text style={{ fontSize: 15, color: 'black', flexGrow: 2, marginLeft: 20 }}>{props.date}</Text>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2}>
-				<MaterialIcons name="compare" size={20} color="black" style={{paddingRight:15}} />
+				<MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
 			</TouchableOpacity>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
 				{/* <Image style={{ height: 30, width: 30 }} source={delete_img} /> */}
@@ -379,19 +391,37 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		margin: 10,
+		// shadowColor: "#000",
+		// shadowOffset: {
+		// 	width: 0,
+		// 	height: 12,
+		// },
+		// shadowOpacity: 0.58,
+		// shadowRadius: 16.00,
+		
+		// elevation: 24,
+		
 	},
 	scrollview: {
 		flex: 1,
-		backgroundColor: 'white',
 		margin: 0,
-		marginTop: 60,
 		padding: 20,
+	},
+	whitePanel: {
+		marginTop: 60,
+		backgroundColor: 'white',
+		flex: 1,
 		borderTopLeftRadius: 30,
 		borderTopRightRadius: 30,
-		shadowColor: '#171717',
-		shadowOffset: { width: -2, height: 4 },
-		shadowOpacity: 0.2,
-		shadowRadius: 3,
+		// shadowColor: "red",
+		// shadowOffset: {
+		// 	width: 0,
+		// 	height: 12,
+		// },
+		// shadowOpacity: 0.58,
+		// shadowRadius: 16.00,
+
+		// elevation: 24,
 	},
 	img: {
 		height: 50,

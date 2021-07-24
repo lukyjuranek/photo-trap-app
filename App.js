@@ -11,19 +11,12 @@ import { ceil } from 'react-native-reanimated';
 import * as SQLite from 'expo-sqlite';
 import { Ionicons, AntDesign, Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-var bg_img = require('./img/bg-img1.png');
-var thumbnail_img = require('./img/example-img.jpg');
-var settings_img = require('./img/settings.png');
-var camera_img = require('./img/camera.png');
-var delete_img = require('./img/delete.png');
-var plus_img = require('./img/plus.png');
-var aperture_img = require('./img/aperture.png');
-var save_img = require('./img/save.png');
-var cancel_img = require('./img/cancel.png');
+var bg_img = require('./img/bg-img.png');
 
 // TODO:
 // - remove unused imports and commented javascript
 // - try increasing the photo quality without getting the "Row too big to fit into CursorWindow" error
+// - remove ID from list item text
 
 const Stack = createStackNavigator();
 
@@ -59,17 +52,17 @@ export default function App() {
 					},
 					headerTintColor: 'white'
 				}} />
+				< Stack.Screen name="Compare" component={CompareScreen} options={{
+					headerStyle: {
+						backgroundColor: '#202020',
+					},
+					headerTintColor: 'white'
+				}} />
 				<Stack.Screen name="Settings" component={SettigsScreen} />
 			</Stack.Navigator>
 		</NavigationContainer>
 	);
 }
-
-
-
-const removeItem = () => {
-	null;
-};
 
 // <MainScreen /> component
 const MainScreen = ({ navigation }) => {
@@ -154,7 +147,6 @@ const MainScreen = ({ navigation }) => {
 					<View style={styles.topPanel}>
 						<Text style={{ fontSize: 30, color: 'white', fontWeight: 'bold' }}>Photo Trap</Text>
 						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => navigation.navigate('Settings')}>
-							{/* <Image style={{ height: 30, width: 30 }} source={settings_img} /> */}
 							<Ionicons name="settings-outline" size={30} color="white" />
 						</TouchableOpacity>
 					</View>
@@ -165,12 +157,15 @@ const MainScreen = ({ navigation }) => {
 							{/* Add button */}
 							<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
 								<MaterialIcons name="add-a-photo" size={30} color="gray" style={{ padding: 10 }} />
-								{/* <Image source={plus_img} style={{ height: 50, width: 50, }} /> */}
 								<Text style={{ fontSize: 15, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
 							</TouchableOpacity>
 							{
 								items.map((item, key) => {
-									return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} />);
+									return (<Item img={item.Image} date={item.Name + " (ID:" + item.ID + ")"} key={item.ID} id={item.ID} refresh={getData} compare={() => {
+										navigation.navigate('Compare', {
+											itemId: item.ID,
+										})
+									}} />);
 								})
 							}
 							<View style={{ height: 100 }}></View>
@@ -235,7 +230,7 @@ const CameraScreen = () => {
 	const onSnap = async () => {
 		if (cameraRef.current) {
 			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
-			// value over 0.7 throws an error: Row too big to fit into CursorWindow
+			// values over 0.7 throws an error: Row too big to fit into CursorWindow
 			const data = await cameraRef.current.takePictureAsync(options);
 			const source = data.base64;
 			setImgBase64(source);
@@ -310,9 +305,98 @@ const SettigsScreen = () => {
 }
 
 // <Compare screen /> component
-const CompareScreen = () => {
+const CompareScreen = ({ route, navigation }) => {
+	// Get the parameter
+	const { itemId } = route.params;
+	const cameraRef = useRef();
+	const [hasPermission, setHasPermission] = useState(null);
+	const [type, setType] = useState(Camera.Constants.Type.back);
+	const [imgBase64, setImgBase64] = useState('');
+	const [isPreview, setIsPreview] = useState(false);
+
+	const getImageByID = async (id) => {
+		try {
+			await db.transaction(
+				async (tx) => {
+					await tx.executeSql(
+						"SELECT Image from Items WHERE ID=?",
+						[id],
+						(tx, results) => {
+							setImgBase64(results.rows.item(0).Image);
+						},
+						(tx, error) => {
+							console.error("Could not execute query" + error);
+						}
+					)
+				})
+		} catch (error) {
+			console.log(error);
+		};
+	};
+
+	useEffect(() => {
+		getImageByID(itemId);
+		(async () => {
+			const { status } = await Camera.requestPermissionsAsync();
+			setHasPermission(status === 'granted');
+		})();
+	}, []);
+
+	if (hasPermission === null) {
+		return null;
+	}
+	if (hasPermission === false) {
+		return <Text>No access to camera</Text>;
+	}
+
+
+
+	const onSnap = async () => {
+		if (cameraRef.current) {
+			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
+			// values over 0.7 throws an error: Row too big to fit into CursorWindow
+			// const data = await cameraRef.current.takePictureAsync(options);
+			// const source = data.base64;
+			// setImgBase64(source);
+
+			if (true) {
+				await cameraRef.current.pausePreview();
+				setIsPreview(true);
+			}
+		}
+	};
+
+	const stopPreview = async () => {
+		await cameraRef.current.resumePreview();
+		setIsPreview(false);
+	}
+
 	return (
-		<Text style={{ fontSize: 30 }}>Compare screen</Text>
+		<View style={{ flex: 1, backgroundColor: '#202020' }}>
+			<View style={{ position: 'relative', height: Dimensions.get('window').width * 4 / 3 }}>
+				<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
+				</Camera>
+				<Image style={{ opacity: 0.5, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
+				{/* <View style={{ backgroundColor:'red', position: 'absolute', top: 0, left: 0, height: Dimensions.get('window').width * 4 / 3, width: '100%' }}></View> */}
+			</View>
+			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+				{isPreview
+					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
+						<TouchableOpacity style={{ flex:1, alignItems: 'center'}}>
+							<MaterialIcons name="compare" size={50} color="white" />
+							<Text style={{ color: 'white', textAlign: 'center' }}>Compare</Text>
+						</TouchableOpacity>
+						<TouchableOpacity onPress={stopPreview} style={{ flex:1, alignItems: 'center'}}>
+							<MaterialIcons name='cancel' size={50} color='white' />
+							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
+						</TouchableOpacity>
+					</View>
+					: <TouchableOpacity onPress={onSnap}>
+						<MaterialIcons name='camera' size={60} color='white' />
+					</TouchableOpacity>
+				}
+			</View>
+		</View>
 	);
 }
 
@@ -373,13 +457,14 @@ const Item = (props) => {
 	};
 	return (
 		<View style={styles.item}>
-			<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
-			<Text style={{ fontSize: 15, color: 'black', flexGrow: 2, marginLeft: 20 }}>{props.date}</Text>
-			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2}>
+			<TouchableOpacity onPress={props.compare} style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+				<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
+				<Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}</Text>
+			</TouchableOpacity>
+			<TouchableOpacity  onPress={props.compare} style={styles.touchableOpacity} activeOpacity={0.2}>
 				<MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
 			</TouchableOpacity>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
-				{/* <Image style={{ height: 30, width: 30 }} source={delete_img} /> */}
 				<Feather name="trash" size={20} color="red" />
 			</TouchableOpacity>
 		</View>
@@ -453,8 +538,8 @@ const styles = StyleSheet.create({
 		// opacity: 0.7
 	},
 	touchableOpacity: {
-		flexDirection: 'row',
-		alignItems: 'center',
+		// flexDirection: 'row',
+		// alignItems: 'center',
 		// height: 40,
 		// borderRadius: 5,
 		// margin: 5,

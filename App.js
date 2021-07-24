@@ -4,6 +4,7 @@ import {
 	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions, ToastAndroid,
 	Platform, StatusBar
 } from 'react-native';
+import Slider from '@react-native-community/slider'
 import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
@@ -312,6 +313,7 @@ const CompareScreen = ({ route, navigation }) => {
 	const [hasPermission, setHasPermission] = useState(null);
 	const [type, setType] = useState(Camera.Constants.Type.back);
 	const [imgBase64, setImgBase64] = useState('');
+	const [opacity, setOpacity] = useState(0.5);
 	const [isPreview, setIsPreview] = useState(false);
 
 	const getImageByID = async (id) => {
@@ -362,6 +364,7 @@ const CompareScreen = ({ route, navigation }) => {
 			if (true) {
 				await cameraRef.current.pausePreview();
 				setIsPreview(true);
+				setOpacity(1);
 			}
 		}
 	};
@@ -369,6 +372,7 @@ const CompareScreen = ({ route, navigation }) => {
 	const stopPreview = async () => {
 		await cameraRef.current.resumePreview();
 		setIsPreview(false);
+		setOpacity(0.5);
 	}
 
 	return (
@@ -376,24 +380,36 @@ const CompareScreen = ({ route, navigation }) => {
 			<View style={{ position: 'relative', height: Dimensions.get('window').width * 4 / 3 }}>
 				<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
 				</Camera>
-				<Image style={{ opacity: 0.5, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
+				<Image style={{ opacity, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
 				{/* <View style={{ backgroundColor:'red', position: 'absolute', top: 0, left: 0, height: Dimensions.get('window').width * 4 / 3, width: '100%' }}></View> */}
 			</View>
 			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
 				{isPreview
 					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
-						<TouchableOpacity style={{ flex:1, alignItems: 'center'}}>
+						<TouchableOpacity onPressIn={ ()=> setOpacity(0) } onPressOut={ () => setOpacity(1)} style={{ flex: 1, alignItems: 'center' }}>
 							<MaterialIcons name="compare" size={50} color="white" />
 							<Text style={{ color: 'white', textAlign: 'center' }}>Compare</Text>
 						</TouchableOpacity>
-						<TouchableOpacity onPress={stopPreview} style={{ flex:1, alignItems: 'center'}}>
+						<TouchableOpacity onPress={stopPreview} style={{ flex: 1, alignItems: 'center' }}>
 							<MaterialIcons name='cancel' size={50} color='white' />
 							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
 						</TouchableOpacity>
 					</View>
-					: <TouchableOpacity onPress={onSnap}>
-						<MaterialIcons name='camera' size={60} color='white' />
-					</TouchableOpacity>
+					: <View style={{ flex: 1, justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row' }}>
+						<Slider
+						onValueChange={ value => setOpacity(value)}
+						value={opacity}
+							style={{ width: 180, height: 40 }}
+							step={0.1}
+							minimumValue={0}
+							maximumValue={1}
+							minimumTrackTintColor="#FFFFFF"
+							maximumTrackTintColor="#000000"
+							thumbTintColor="#FFFFFF"
+						/>
+						<TouchableOpacity onPress={onSnap}>
+							<MaterialIcons name='camera' size={60} color='white' />
+						</TouchableOpacity></View>
 				}
 			</View>
 		</View>
@@ -461,7 +477,7 @@ const Item = (props) => {
 				<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
 				<Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}</Text>
 			</TouchableOpacity>
-			<TouchableOpacity  onPress={props.compare} style={styles.touchableOpacity} activeOpacity={0.2}>
+			<TouchableOpacity onPress={props.compare} style={styles.touchableOpacity} activeOpacity={0.2}>
 				<MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
 			</TouchableOpacity>
 			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>

@@ -1,12 +1,16 @@
 {
   "expo": {
-    "name": "photo-trap-app",
+    "name": "Photo Trap",
     "slug": "photo-trap-app",
-    "version": "1.0.0",
+    "icon": "./assets/icon.png",
+    "version": "0.1.0",
     "orientation": "portrait",
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "android": {
+      "package": "com.lukasjuranek.phototrapapp"
+    }
   },
   "name": "photo-trap-app"
 }

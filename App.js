@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
 	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions, ToastAndroid,
-	Platform, StatusBar
+	Platform, StatusBar, Modal, Pressable
 } from 'react-native';
 import Slider from '@react-native-community/slider'
 import { NavigationContainer, useIsFocused } from '@react-navigation/native';
@@ -10,21 +10,23 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
 import { ceil } from 'react-native-reanimated';
 import * as SQLite from 'expo-sqlite';
-import { Ionicons, AntDesign, Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, AntDesign, Feather, MaterialIcons, MaterialCommunityIcons, Entypo } from '@expo/vector-icons';
 
 var bg_img = require('./img/bg-img.png');
 
 // TODO:
 // - remove unused imports and commented javascript
 // - try increasing the photo quality without getting the "Row too big to fit into CursorWindow" error
-// - remove ID from list item text
+// - create you own icon
+// - move components into seperate files
 
 const Stack = createStackNavigator();
 
-const db = SQLite.openDatabase('MainDB', () => { console.log(error) });
+const db = SQLite.openDatabase('MainDB', () => { console.error(error) });
 
 export default function App() {
 	StatusBar.setBarStyle('dark-content', true);
+
 	const createTable = () => {
 		db.transaction((tx) => {
 			tx.executeSql(
@@ -69,7 +71,7 @@ export default function App() {
 const MainScreen = ({ navigation }) => {
 
 	const [items, setItems] = useState([]);
-
+	const [modalVisible, setModalVisible] = useState(false);
 	const isFocused = useIsFocused();
 
 	// Runs when items focused
@@ -121,7 +123,7 @@ const MainScreen = ({ navigation }) => {
 							for (let i = 0; i < results.rows.length; ++i)
 								temp.push(results.rows.item(i));
 							setItems(temp);
-							console.log("getData() succesfull");
+							// console.log("getData() succesfull");
 						},
 						(tx, error) => {
 							console.error("Could not execute query" + error);
@@ -141,14 +143,52 @@ const MainScreen = ({ navigation }) => {
 				: <StatusBar barStyle={'dark-content'} />
 			}
 
+			<Modal
+				animationType="slide"
+				transparent={true}
+				visible={modalVisible}
+				onRequestClose={() => {
+					setModalVisible(!modalVisible);
+				}}
+			>
+				<View style={styles.centeredView}>
+					<View style={styles.modalView}>
+						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tutorial</Text>
+						<Text style={styles.modalText}>
+							<Text style={{ fontWeight: 'bold' }}>Step 1: </Text>
+							Take a photo of your items and save it
+						</Text>
+						<Text style={styles.modalText}>
+							<Text style={{ fontWeight: 'bold' }}>Step 2: </Text>
+							Click on the photo when you want to check if anyone moved any of your items
+						</Text>
+						<Text style={styles.modalText}>
+							<Text style={{ fontWeight: 'bold' }}>Step 3: </Text>
+							Align the photo with the view from your camera (use the slider to adjust transparency) and click the shutter button
+						</Text>
+						<Text style={styles.modalText}>
+							<Text style={{ fontWeight: 'bold' }}>Step 4: </Text>
+							Using the compare button switch between the first and second photo to see if there is a difference
+						</Text>
+						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tips</Text>
+						<Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
+						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>About</Text>
+						<Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
+						<Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(!modalVisible)} >
+							<Text style={styles.textStyle}>Close</Text>
+						</Pressable>
+					</View>
+				</View>
+			</Modal>
+
 			<View style={styles.container}>
 				<ImageBackground source={bg_img} style={styles.imagebackground} resizeMode='cover'>
 
 					{/* Top bar */}
 					<View style={styles.topPanel}>
 						<Text style={{ fontSize: 30, color: 'white', fontWeight: 'bold' }}>Photo Trap</Text>
-						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => navigation.navigate('Settings')}>
-							<Ionicons name="settings-outline" size={30} color="white" />
+						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => setModalVisible(true)}>
+							<Feather name="help-circle" size={30} color="white" />
 						</TouchableOpacity>
 					</View>
 
@@ -396,7 +436,7 @@ const CompareScreen = ({ route, navigation }) => {
 					</View>
 					: <View style={{ flex: 1, justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row' }}>
 						<Slider
-							onValueChange={ value => setOpacity(value) }
+							onValueChange={value => setOpacity(value)}
 							value={opacity}
 							style={{ width: 180, height: 40 }}
 							step={0.1}
@@ -498,7 +538,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		marginTop: 60,
+		marginTop: 40,
 		marginHorizontal: 20
 	},
 	item: {
@@ -524,11 +564,12 @@ const styles = StyleSheet.create({
 		padding: 20,
 	},
 	whitePanel: {
-		marginTop: 60,
+		marginTop: 50,
 		backgroundColor: 'white',
 		flex: 1,
 		borderTopLeftRadius: 30,
 		borderTopRightRadius: 30,
+
 		// shadowColor: "red",
 		// shadowOffset: {
 		// 	width: 0,
@@ -559,4 +600,42 @@ const styles = StyleSheet.create({
 		// borderRadius: 5,
 		// margin: 5,
 	},
+	centeredView: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		marginTop: 22
+	},
+	modalView: {
+		margin: 20,
+		backgroundColor: "white",
+		borderRadius: 20,
+		padding: 25,
+		alignItems: "center",
+		shadowColor: "#000",
+		shadowOffset: {
+			width: 0,
+			height: 2
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5
+	},
+	button: {
+		borderRadius: 15,
+		padding: 8,
+		// elevation: 2
+	},
+	buttonClose: {
+		backgroundColor: "#2196F3",
+	},
+	textStyle: {
+		color: "white",
+		fontWeight: "bold",
+		textAlign: "center"
+	},
+	modalText: {
+		marginBottom: 15,
+		textAlign: "center"
+	}
 });

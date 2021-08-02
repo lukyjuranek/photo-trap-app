@@ -1,24 +1,17 @@
 // import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, TouchableHighlight, Alert, SafeAreaView, Dimensions, ToastAndroid,
+	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,
 	Platform, StatusBar, Modal, Pressable
 } from 'react-native';
 import Slider from '@react-native-community/slider'
 import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Camera } from 'expo-camera';
-import { ceil } from 'react-native-reanimated';
 import * as SQLite from 'expo-sqlite';
-import { Ionicons, AntDesign, Feather, MaterialIcons, MaterialCommunityIcons, Entypo } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 
 var bg_img = require('./img/bg-img.png');
-
-// TODO:
-// - remove unused imports and commented javascript
-// - try increasing the photo quality without getting the "Row too big to fit into CursorWindow" error
-// - create you own icon
-// - move components into seperate files
 
 const Stack = createStackNavigator();
 
@@ -61,7 +54,6 @@ export default function App() {
 					},
 					headerTintColor: 'white'
 				}} />
-				<Stack.Screen name="Settings" component={SettigsScreen} />
 			</Stack.Navigator>
 		</NavigationContainer>
 	);
@@ -71,8 +63,8 @@ export default function App() {
 const MainScreen = ({ navigation }) => {
 
 	const [items, setItems] = useState([]);
-	const [modalVisible, setModalVisible] = useState(false);
 	const isFocused = useIsFocused();
+	const [modalVisible, setModalVisible] = useState(false);
 
 	// Runs when items focused
 	React.useEffect(() => {
@@ -82,33 +74,6 @@ const MainScreen = ({ navigation }) => {
 		// console.log("Test", typeof (items));
 		// console.log(items.length);
 	}, [isFocused]);
-
-	const addItem = (name, img) => {
-		try {
-			db.transaction(
-				(tx) => {
-					tx.executeSql("INSERT INTO Items (Name, Image) VALUES (?, ?)",
-						[name, img],
-						(tx, results) => {
-							console.log('Rows affected: ', results.rowsAffected);
-							if (results.rowsAffected > 0) {
-								console.log('Data Inserted Successfully....');
-							} else console.log('Failed....');
-						}
-					),
-						(tx, error) => {
-							console.error("Could not execute query" + error);
-						};
-				}, (err) => {
-					console.error("Error1")
-				}, () => {
-					console.log("Success")
-				}
-			);
-		} catch (error) {
-			console.error(error);
-		}
-	};
 
 	const getData = async () => {
 		console.log('getData');
@@ -143,43 +108,7 @@ const MainScreen = ({ navigation }) => {
 				: <StatusBar barStyle={'dark-content'} />
 			}
 
-			<Modal
-				animationType="slide"
-				transparent={true}
-				visible={modalVisible}
-				onRequestClose={() => {
-					setModalVisible(!modalVisible);
-				}}
-			>
-				<View style={styles.centeredView}>
-					<View style={styles.modalView}>
-						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tutorial</Text>
-						<Text style={styles.modalText}>
-							<Text style={{ fontWeight: 'bold' }}>Step 1: </Text>
-							Take a photo of your items and save it
-						</Text>
-						<Text style={styles.modalText}>
-							<Text style={{ fontWeight: 'bold' }}>Step 2: </Text>
-							Click on the photo when you want to check if anyone moved any of your items
-						</Text>
-						<Text style={styles.modalText}>
-							<Text style={{ fontWeight: 'bold' }}>Step 3: </Text>
-							Align the photo with the view from your camera (use the slider to adjust transparency) and click the shutter button
-						</Text>
-						<Text style={styles.modalText}>
-							<Text style={{ fontWeight: 'bold' }}>Step 4: </Text>
-							Using the compare button switch between the first and second photo to see if there is a difference
-						</Text>
-						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tips</Text>
-						<Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
-						<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>About</Text>
-						<Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
-						<Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(!modalVisible)} >
-							<Text style={styles.textStyle}>Close</Text>
-						</Pressable>
-					</View>
-				</View>
-			</Modal>
+			<ModalComponent modalVisible={modalVisible} setModalVisible={setModalVisible} />
 
 			<View style={styles.container}>
 				<ImageBackground source={bg_img} style={styles.imagebackground} resizeMode='cover'>
@@ -202,11 +131,19 @@ const MainScreen = ({ navigation }) => {
 							</TouchableOpacity>
 							{
 								items.map((item, key) => {
-									return (<Item img={item.Image} date={item.Name} key={item.ID} id={item.ID} refresh={getData} compare={() => {
-										navigation.navigate('Compare', {
-											itemId: item.ID,
-										})
-									}} />);
+									return (
+										<Item
+											db={db}
+											img={item.Image}
+											date={item.Name}
+											key={item.ID}
+											id={item.ID}
+											refresh={getData}
+											compare={() => {
+												navigation.navigate('Compare', {
+													itemId: item.ID,
+												})
+											}} />);
 								})
 							}
 							<View style={{ height: 100 }}></View>
@@ -258,7 +195,7 @@ const CameraScreen = () => {
 							console.error("Could not execute query");
 						};
 				}, (tx, err) => {
-					console.error("Error2")
+					console.error("Error")
 				}, () => {
 					console.log("Success")
 				}
@@ -270,7 +207,8 @@ const CameraScreen = () => {
 
 	const onSnap = async () => {
 		if (cameraRef.current) {
-			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
+			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1.
+			// 0 means compress for small size, 1 means compress for maximum quality. 
 			// values over 0.7 throws an error: Row too big to fit into CursorWindow
 			const data = await cameraRef.current.takePictureAsync(options);
 			const source = data.base64;
@@ -282,7 +220,6 @@ const CameraScreen = () => {
 			}
 		}
 	};
-
 
 	const getCurrentDateAndTime = () => {
 		const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -339,9 +276,45 @@ const CameraScreen = () => {
 }
 
 // <SettingsScreen /> component
-const SettigsScreen = () => {
+// Imports modalVisible, setModalVisible state to change visibility
+const ModalComponent = ({ modalVisible, setModalVisible }) => {
 	return (
-		<Text style={{ fontSize: 30 }}>Settings screen</Text>
+		<Modal
+			animationType="slide"
+			transparent={true}
+			visible={modalVisible}
+			onRequestClose={() => {
+				setModalVisible(true);
+			}}>
+			<View style={styles.centeredView}>
+				<View style={styles.modalView}>
+					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tutorial</Text>
+					<Text style={styles.modalText}>
+						<Text style={{ fontWeight: 'bold' }}>Step 1: </Text>
+						Take a photo of your items and save it
+					</Text>
+					<Text style={styles.modalText}>
+						<Text style={{ fontWeight: 'bold' }}>Step 2: </Text>
+						Click on the photo when you want to check if anyone moved any of your items
+					</Text>
+					<Text style={styles.modalText}>
+						<Text style={{ fontWeight: 'bold' }}>Step 3: </Text>
+						Align the photo with the view from your camera (use the slider to adjust transparency) and click the shutter button
+					</Text>
+					<Text style={styles.modalText}>
+						<Text style={{ fontWeight: 'bold' }}>Step 4: </Text>
+						Using the compare button switch between the first and second photo to see if there is a difference
+					</Text>
+					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tips</Text>
+					<Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
+					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>About</Text>
+					<Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
+					<Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(false)} >
+						<Text style={styles.textStyle}>Close</Text>
+					</Pressable>
+				</View>
+			</View>
+		</Modal>
 	);
 }
 
@@ -390,8 +363,6 @@ const CompareScreen = ({ route, navigation }) => {
 	if (hasPermission === false) {
 		return <Text>No access to camera</Text>;
 	}
-
-
 
 	const onSnap = async () => {
 		if (cameraRef.current) {
@@ -458,81 +429,78 @@ const CompareScreen = ({ route, navigation }) => {
 // <Item /> component
 const Item = (props) => {
 
-	const removeItem = (id) => {
-		try {
-			db.transaction(
-				(tx) => {
-					tx.executeSql("DELETE FROM Items WHERE ID=?",
-						[id],
-						(tx, results) => {
-							console.log('Rows affected: ', results.rowsAffected);
-							if (results.rowsAffected > 0) {
-								console.log('Item removed successfully....');
-							} else console.error('Failed....');
-						}
-					),
-						(tx, error) => {
-							console.error("Could not execute query");
-						};
-				}, (err) => {
-					console.error("Error")
-				}, () => {
-					console.log("Success")
-				}
-			);
-		} catch (error) {
-			console.error(error);
-		}
+    const removeItem = (id) => {
+        try {
+            db.transaction(
+                (tx) => {
+                    tx.executeSql("DELETE FROM Items WHERE ID=?",
+                        [id],
+                        (tx, results) => {
+                            console.log('Rows affected: ', results.rowsAffected);
+                            if (results.rowsAffected > 0) {
+                                console.log('Item removed successfully....');
+                            } else console.error('Failed....');
+                        }
+                    ),
+                        (tx, error) => {
+                            console.error("Could not execute query");
+                        };
+                }, (err) => {
+                    console.error("Error")
+                }, () => {
+                    console.log("Success")
+                }
+            );
+        } catch (error) {
+            console.error(error);
+        }
+        props.refresh();
+    };
 
-		props.refresh();
-	};
-
-	const showConfirmDialog = (text) => {
-		return Alert.alert(
-			"Are you sure?",
-			"Are you sure you want to delete this item?",
-			[
-				// The "Yes" button
-				{
-					text: "Yes",
-					onPress: () => {
-						// setShowBox(false);
-						removeItem(props.id);
-						console.log("Delete item with ID: ", props.id);
-					},
-					style: 'destructive'
-				},
-				// The "No" button
-				// Does nothing but dismiss the dialog when tapped
-				{
-					text: "No",
-				},
-			]
-		);
-	};
-	return (
-		<View style={styles.item}>
-			<TouchableOpacity onPress={props.compare} style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-				<Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
-				<Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}</Text>
-			</TouchableOpacity>
-			<TouchableOpacity onPress={props.compare} style={styles.touchableOpacity} activeOpacity={0.2}>
-				<MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
-			</TouchableOpacity>
-			<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
-				<Feather name="trash" size={20} color="red" />
-			</TouchableOpacity>
-		</View>
-	);
+    const showConfirmDialog = (text) => {
+        return Alert.alert(
+            "Are you sure?",
+            "Are you sure you want to delete this item?",
+            [
+                // The "Yes" button
+                {
+                    text: "Yes",
+                    onPress: () => {
+                        // setShowBox(false);
+                        removeItem(props.id);
+                        console.log("Delete item with ID: ", props.id);
+                    },
+                    style: 'destructive'
+                },
+                // The "No" button
+                // Does nothing but dismiss the dialog when tapped
+                {
+                    text: "No",
+                },
+            ]
+        );
+    };
+    return (
+        <View style={styles.item}>
+            <TouchableOpacity onPress={props.compare} style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
+                <Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}a</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={props.compare} activeOpacity={0.2}>
+                <MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.2} onPress={() => showConfirmDialog(props.date)}>
+                <Feather name="trash" size={20} color="red" />
+            </TouchableOpacity>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		// fontFamily: "-apple-system, BlinkMacSystemFont Segoe UI",
 		justifyContent: "center",
 		alignItems: "center",
-		// backgroundColor: "orange"
 	},
 	topPanel: {
 		flexDirection: 'row',
@@ -540,23 +508,6 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		marginTop: 40,
 		marginHorizontal: 20
-	},
-	item: {
-		flex: 1,
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		margin: 10,
-		// shadowColor: "#000",
-		// shadowOffset: {
-		// 	width: 0,
-		// 	height: 12,
-		// },
-		// shadowOpacity: 0.58,
-		// shadowRadius: 16.00,
-
-		// elevation: 24,
-
 	},
 	scrollview: {
 		flex: 1,
@@ -569,36 +520,23 @@ const styles = StyleSheet.create({
 		flex: 1,
 		borderTopLeftRadius: 30,
 		borderTopRightRadius: 30,
-
-		// shadowColor: "red",
-		// shadowOffset: {
-		// 	width: 0,
-		// 	height: 12,
-		// },
-		// shadowOpacity: 0.58,
-		// shadowRadius: 16.00,
-
-		// elevation: 24,
 	},
 	img: {
 		height: 50,
 		width: 50,
 		borderRadius: 5
 	},
+	item: {
+		flex: 1,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		margin: 10,
+	},
 	imagebackground: {
 		flex: 1,
 		width: '100%',
-		height: '100%',
-		// justifyContent: "center",
-		// alignItems: "center",
-		// opacity: 0.7
-	},
-	touchableOpacity: {
-		// flexDirection: 'row',
-		// alignItems: 'center',
-		// height: 40,
-		// borderRadius: 5,
-		// margin: 5,
+		height: '100%'
 	},
 	centeredView: {
 		flex: 1,
@@ -623,11 +561,10 @@ const styles = StyleSheet.create({
 	},
 	button: {
 		borderRadius: 15,
-		padding: 8,
-		// elevation: 2
+		padding: 8
 	},
 	buttonClose: {
-		backgroundColor: "#2196F3",
+		backgroundColor: "#2196F3"
 	},
 	textStyle: {
 		color: "white",

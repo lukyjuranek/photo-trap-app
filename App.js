@@ -4,7 +4,6 @@ import {
 	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,
 	Platform, StatusBar, Modal, Pressable
 } from 'react-native';
-import Slider from '@react-native-community/slider'
 import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SQLite from 'expo-sqlite';
@@ -13,6 +12,8 @@ import { Camera } from 'expo-camera';
 
 import Item from './src/components/Item';
 import CameraScreen from './src/components/CameraScreen';
+import CompareScreen from './src/components/CompareScreen';
+import ModalComponent from './src/components/ModalComponent';
 
 var bg_img = require('./img/bg-img.png');
 
@@ -158,157 +159,6 @@ const MainScreen = ({ navigation }) => {
 	);
 }
 
-// <ModalComponent /> component
-// Imports modalVisible, setModalVisible state to change visibility
-const ModalComponent = ({ modalVisible, setModalVisible }) => {
-	return (
-		<Modal
-			animationType="slide"
-			transparent={true}
-			visible={modalVisible}
-			onRequestClose={() => {
-				setModalVisible(true);
-			}}>
-			<View style={styles.centeredView}>
-				<View style={styles.modalView}>
-					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tutorial</Text>
-					<Text style={styles.modalText}>
-						<Text style={{ fontWeight: 'bold' }}>Step 1: </Text>
-						Take a photo of your items and save it
-					</Text>
-					<Text style={styles.modalText}>
-						<Text style={{ fontWeight: 'bold' }}>Step 2: </Text>
-						Click on the photo when you want to check if anyone moved any of your items
-					</Text>
-					<Text style={styles.modalText}>
-						<Text style={{ fontWeight: 'bold' }}>Step 3: </Text>
-						Align the photo with the view from your camera (use the slider to adjust transparency) and click the shutter button
-					</Text>
-					<Text style={styles.modalText}>
-						<Text style={{ fontWeight: 'bold' }}>Step 4: </Text>
-						Using the compare button switch between the first and second photo to see if there is a difference
-					</Text>
-					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tips</Text>
-					<Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
-					<Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>About</Text>
-					<Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
-					<Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(false)} >
-						<Text style={styles.textStyle}>Close</Text>
-					</Pressable>
-				</View>
-			</View>
-		</Modal>
-	);
-}
-
-// <Compare screen /> component
-const CompareScreen = ({ route, navigation }) => {
-	// Get the parameter
-	const { itemId } = route.params;
-	const cameraRef = useRef();
-	const [hasPermission, setHasPermission] = useState(null);
-	const [type, setType] = useState(Camera.Constants.Type.back);
-	const [imgBase64, setImgBase64] = useState('');
-	const [opacity, setOpacity] = useState(0.5);
-	const [isPreview, setIsPreview] = useState(false);
-
-	const getImageByID = async (id) => {
-		try {
-			await db.transaction(
-				async (tx) => {
-					await tx.executeSql(
-						"SELECT Image from Items WHERE ID=?",
-						[id],
-						(tx, results) => {
-							setImgBase64(results.rows.item(0).Image);
-						},
-						(tx, error) => {
-							console.error("Could not execute query" + error);
-						}
-					)
-				})
-		} catch (error) {
-			console.log(error);
-		};
-	};
-
-	useEffect(() => {
-		getImageByID(itemId);
-		(async () => {
-			const { status } = await Camera.requestPermissionsAsync();
-			setHasPermission(status === 'granted');
-		})();
-	}, []);
-
-	if (hasPermission === null) {
-		return null;
-	}
-	if (hasPermission === false) {
-		return <Text>No access to camera</Text>;
-	}
-
-	const onSnap = async () => {
-		if (cameraRef.current) {
-			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
-			// values over 0.7 throws an error: Row too big to fit into CursorWindow
-			// const data = await cameraRef.current.takePictureAsync(options);
-			// const source = data.base64;
-			// setImgBase64(source);
-
-			if (true) {
-				await cameraRef.current.pausePreview();
-				setIsPreview(true);
-				setOpacity(1);
-			}
-		}
-	};
-
-	const stopPreview = async () => {
-		await cameraRef.current.resumePreview();
-		setIsPreview(false);
-		setOpacity(0.5);
-	}
-
-	return (
-		<View style={{ flex: 1, backgroundColor: '#202020' }}>
-			<View style={{ position: 'relative', height: Dimensions.get('window').width * 4 / 3 }}>
-				<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
-				</Camera>
-				<Image style={{ opacity, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
-			</View>
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
-				{isPreview
-					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
-						<TouchableOpacity onPressIn={() => setOpacity(0)} onPressOut={() => setOpacity(1)} style={{ flex: 1, alignItems: 'center' }}>
-							<MaterialIcons name="compare" size={50} color="white" />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Compare</Text>
-						</TouchableOpacity>
-						<TouchableOpacity onPress={stopPreview} style={{ flex: 1, alignItems: 'center' }}>
-							<MaterialIcons name='cancel' size={50} color='white' />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
-						</TouchableOpacity>
-					</View>
-					: <View style={{ flex: 1, justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row' }}>
-						<Slider
-							onValueChange={value => setOpacity(value)}
-							value={opacity}
-							style={{ width: 180, height: 40 }}
-							step={0.1}
-							minimumValue={0}
-							maximumValue={1}
-							minimumTrackTintColor="#FFFFFF"
-							maximumTrackTintColor="#000000"
-							thumbTintColor="#FFFFFF"
-						/>
-						<TouchableOpacity onPress={onSnap}>
-							<MaterialIcons name='camera' size={60} color='white' />
-						</TouchableOpacity></View>
-				}
-			</View>
-		</View>
-	);
-}
-
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
@@ -350,42 +200,5 @@ const styles = StyleSheet.create({
 		flex: 1,
 		width: '100%',
 		height: '100%'
-	},
-	centeredView: {
-		flex: 1,
-		justifyContent: "center",
-		alignItems: "center",
-		marginTop: 22
-	},
-	modalView: {
-		margin: 20,
-		backgroundColor: "white",
-		borderRadius: 20,
-		padding: 25,
-		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 2
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5
-	},
-	button: {
-		borderRadius: 15,
-		padding: 8
-	},
-	buttonClose: {
-		backgroundColor: "#2196F3"
-	},
-	textStyle: {
-		color: "white",
-		fontWeight: "bold",
-		textAlign: "center"
-	},
-	modalText: {
-		marginBottom: 15,
-		textAlign: "center"
 	}
 });

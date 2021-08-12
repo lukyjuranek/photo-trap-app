@@ -1,4 +1,3 @@
-
 import React, { Component, useState, useEffect, useRef } from 'react';
 import {
 	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,

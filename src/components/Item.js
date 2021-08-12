@@ -64,7 +64,7 @@ const Item = (props) => {
         <View style={styles.item}>
             <TouchableOpacity onPress={props.compare} style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                 <Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
-                <Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}a</Text>
+                <Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={props.compare} activeOpacity={0.2}>
                 <MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />

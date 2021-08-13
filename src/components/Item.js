@@ -1,8 +1,7 @@
 
 import React, { Component } from 'react';
 import {
-    StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,
-    Platform, StatusBar, Modal, Pressable
+    StyleSheet, Text, View, Image, TouchableOpacity, Alert
 } from 'react-native';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 

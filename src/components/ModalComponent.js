@@ -1,7 +1,6 @@
-import React, { Component, useState, useEffect, useRef } from 'react';
+import React, { Component } from 'react';
 import {
-    StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,
-    Platform, StatusBar, Modal, Pressable
+    StyleSheet, Text, View, Modal, Pressable
 } from 'react-native';
 
 // <ModalComponent /> component

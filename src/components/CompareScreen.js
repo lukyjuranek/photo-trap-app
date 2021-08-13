@@ -1,10 +1,9 @@
 import React, { Component, useState, useEffect, useRef } from 'react';
 import {
-	StyleSheet, Text, View, ScrollView, Image, ImageBackground, TouchableOpacity, Alert, SafeAreaView, Dimensions, ToastAndroid,
-	Platform, StatusBar, Modal, Pressable
+	StyleSheet, Text, View, Image, TouchableOpacity, Dimensions
 } from 'react-native';
 import * as SQLite from 'expo-sqlite';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider'
 import { Camera } from 'expo-camera';
 

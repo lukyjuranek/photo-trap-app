@@ -58,16 +58,14 @@ const CompareScreen = ({ route, navigation }) => {
 	const onSnap = async () => {
 		if (cameraRef.current) {
 			const options = { quality: 0.7, base64: true }; // Specify the quality of compression, from 0 to 1. 0 means compress for small size, 1 means compress for maximum quality. 
-			// values over 0.7 throws an error: Row too big to fit into CursorWindow
+			// values over 0.7 throw an error: Row too big to fit into CursorWindow
 			// const data = await cameraRef.current.takePictureAsync(options);
 			// const source = data.base64;
 			// setImgBase64(source);
 
-			if (true) {
-				await cameraRef.current.pausePreview();
-				setIsPreview(true);
-				setOpacity(1);
-			}
+			await cameraRef.current.pausePreview();
+			setIsPreview(true);
+			setOpacity(1);
 		}
 	};
 
@@ -78,25 +76,25 @@ const CompareScreen = ({ route, navigation }) => {
 	}
 
 	return (
-		<View style={{ flex: 1, backgroundColor: '#202020' }}>
-			<View style={{ position: 'relative', height: Dimensions.get('window').width * 4 / 3 }}>
-				<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
+		<View style={styles.mainContainer}>
+			<View style={styles.previewContainer}>
+				<Camera style={styles.camera} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
 				</Camera>
-				<Image style={{ opacity, position: 'absolute', top: 0, left: 0, width: '100%', height: Dimensions.get('window').width * 4 / 3, }} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
+				<Image style={[styles.img, { opacity: opacity, }]} source={{ uri: `data:image/png;base64,${imgBase64}` }} />
 			</View>
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+			<View style={styles.bottomPanel}>
 				{isPreview
-					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
-						<TouchableOpacity onPressIn={() => setOpacity(0)} onPressOut={() => setOpacity(1)} style={{ flex: 1, alignItems: 'center' }}>
+					? <View style={styles.controls2}>
+						<TouchableOpacity onPressIn={() => setOpacity(0)} onPressOut={() => setOpacity(1)} style={styles.buttonAndText}>
 							<MaterialIcons name="compare" size={50} color="white" />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Compare</Text>
+							<Text style={styles.buttonText}>Compare</Text>
 						</TouchableOpacity>
-						<TouchableOpacity onPress={stopPreview} style={{ flex: 1, alignItems: 'center' }}>
+						<TouchableOpacity onPress={stopPreview} style={styles.buttonAndText}>
 							<MaterialIcons name='cancel' size={50} color='white' />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
+							<Text style={styles.buttonText}>Cancel</Text>
 						</TouchableOpacity>
 					</View>
-					: <View style={{ flex: 1, justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row' }}>
+					: <View style={styles.controls1}>
 						<Slider
 							onValueChange={value => setOpacity(value)}
 							value={opacity}
@@ -110,11 +108,60 @@ const CompareScreen = ({ route, navigation }) => {
 						/>
 						<TouchableOpacity onPress={onSnap}>
 							<MaterialIcons name='camera' size={60} color='white' />
-						</TouchableOpacity></View>
+						</TouchableOpacity>
+					</View>
 				}
 			</View>
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	mainContainer: {
+		flex: 1,
+		backgroundColor: '#202020'
+	},
+	previewContainer: {
+		position: 'relative',
+		height: Dimensions.get('window').width * 4 / 3
+	},
+	camera: {
+		height: Dimensions.get('window').width * 4 / 3
+	},
+	img: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		width: '100%',
+		height: Dimensions.get('window').width * 4 / 3
+	},
+	buttonText: {
+		textAlign: 'center',
+		color: 'white',
+		marginTop: 10
+	},
+	buttonAndText: {
+		flex: 1,
+		alignItems: 'center'
+	},
+	bottomPanel: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		flexDirection: 'row',
+	},
+	controls1: {
+		flex: 1,
+		justifyContent: 'space-evenly',
+		alignItems: 'center',
+		flexDirection: 'row'
+	},
+	controls2: {
+		flex: 1,
+		justifyContent: 'space-around',
+		alignItems: 'flex-end',
+		flexDirection: 'row'
+	}
+})
 
 export default CompareScreen;

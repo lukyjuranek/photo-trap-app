@@ -2,14 +2,13 @@ import React, { Component, useState } from 'react';
 import {
 	StyleSheet, Text, View, ScrollView, ImageBackground, TouchableOpacity, SafeAreaView, Platform, StatusBar
 } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
 import * as SQLite from 'expo-sqlite';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 
 import Item from './Item';
 import ModalComponent from './ModalComponent';
 
-var bg_img = require('./../../img/bg-img.png');
+var bg_img = require('./../assets/bg-img.png');
 
 const db = SQLite.openDatabase('MainDB', () => { console.error(error) });
 
@@ -17,17 +16,17 @@ const db = SQLite.openDatabase('MainDB', () => { console.error(error) });
 const MainScreen = ({ navigation }) => {
 
 	const [items, setItems] = useState([]);
-	const isFocused = useIsFocused();
 	const [modalVisible, setModalVisible] = useState(false);
 
 	// Runs when items focused
 	React.useEffect(() => {
-		// console.log("Use effect");
-		getData();
-		// setItems(getData());
-		// console.log("Test", typeof (items));
-		// console.log(items.length);
-	}, [isFocused]);
+		// Reloads items when focused
+		const reload = navigation.addListener('focus', () => {
+			getData();
+		});
+
+		return reload;
+	}, [navigation]);
 
 	const getData = async () => {
 		console.log('getData');
@@ -67,9 +66,9 @@ const MainScreen = ({ navigation }) => {
 			<View style={styles.container}>
 				<ImageBackground source={bg_img} style={styles.imagebackground} resizeMode='cover'>
 
-					{/* Top bar */}
+					{/* Top panel */}
 					<View style={styles.topPanel}>
-						<Text style={{ fontSize: 30, color: 'white', fontWeight: 'bold' }}>Photo Trap</Text>
+						<Text style={styles.topPanelText}>Photo Trap</Text>
 						<TouchableOpacity style={styles.touchableOpacity} activeOpacity={0.2} onPress={() => setModalVisible(true)}>
 							<Feather name="help-circle" size={30} color="white" />
 						</TouchableOpacity>
@@ -79,9 +78,9 @@ const MainScreen = ({ navigation }) => {
 					<View style={styles.whitePanel}>
 						<ScrollView style={styles.scrollview} overScrollMode='never'>
 							{/* Add button */}
-							<TouchableOpacity style={styles.item} onPress={() => { navigation.navigate('Camera') }}>
+							<TouchableOpacity style={styles.addButton} onPress={() => { navigation.navigate('Camera') }}>
 								<MaterialIcons name="add-a-photo" size={30} color="gray" style={{ padding: 10 }} />
-								<Text style={{ fontSize: 15, color: 'grey', flexGrow: 2, marginLeft: 20 }}>Add ...</Text>
+								<Text style={styles.addButtonText}>Add ...</Text>
 							</TouchableOpacity>
 							{
 								items.slice(0).reverse().map((item, key) => {
@@ -109,7 +108,6 @@ const MainScreen = ({ navigation }) => {
 	);
 }
 
-
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
@@ -122,6 +120,11 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		marginTop: 40,
 		marginHorizontal: 20
+	},
+	topPanelText: {
+		fontSize: 30,
+		color: 'white',
+		fontWeight: 'bold'
 	},
 	scrollview: {
 		flex: 1,
@@ -140,12 +143,18 @@ const styles = StyleSheet.create({
 		width: 50,
 		borderRadius: 5
 	},
-	item: {
+	addButton: {
 		flex: 1,
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		margin: 10,
+	},
+	addButtonText: {
+		fontSize: 15,
+		color: 'grey',
+		flexGrow: 2,
+		marginLeft: 20
 	},
 	imagebackground: {
 		flex: 1,

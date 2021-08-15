@@ -16,29 +16,29 @@ const ModalComponent = ({ modalVisible, setModalVisible }) => {
             }}>
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
-                    <Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tutorial</Text>
+                    <Text style={styles.modalHeading}>Tutorial</Text>
                     <Text style={styles.modalText}>
-                        <Text style={{ fontWeight: 'bold' }}>Step 1: </Text>
+                        <Text style={styles.boldText}>Step 1: </Text>
                         Take a photo of your items and save it
                     </Text>
                     <Text style={styles.modalText}>
-                        <Text style={{ fontWeight: 'bold' }}>Step 2: </Text>
+                        <Text style={styles.boldText}>Step 2: </Text>
                         Click on the photo when you want to check if anyone moved any of your items
                     </Text>
                     <Text style={styles.modalText}>
-                        <Text style={{ fontWeight: 'bold' }}>Step 3: </Text>
+                        <Text style={styles.boldText}>Step 3: </Text>
                         Align the photo with the view from your camera (use the slider to adjust transparency) and click the shutter button
                     </Text>
                     <Text style={styles.modalText}>
-                        <Text style={{ fontWeight: 'bold' }}>Step 4: </Text>
+                        <Text style={styles.boldText}>Step 4: </Text>
                         Using the compare button switch between the first and second photo to see if there is a difference
                     </Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>Tips</Text>
+                    <Text style={styles.modalHeading}>Tips</Text>
                     <Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 15 }}>About</Text>
+                    <Text style={styles.modalHeading}>About</Text>
                     <Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(false)} >
-                        <Text style={styles.textStyle}>Close</Text>
+                        <Text style={styles.buttonText}>Close</Text>
                     </Pressable>
                 </View>
             </View>
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     buttonClose: {
         backgroundColor: "#2196F3"
     },
-    textStyle: {
+    buttonText: {
         color: "white",
         fontWeight: "bold",
         textAlign: "center"
@@ -83,6 +83,14 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: "center"
+    },
+    modalHeading: {
+        fontWeight: 'bold',
+        fontSize: 20,
+        marginBottom: 15
+    },
+    boldText: {
+        fontWeight: 'bold'
     }
 });
 

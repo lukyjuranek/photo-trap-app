@@ -106,18 +106,18 @@ const CameraScreen = () => {
 	}
 
 	return (
-		<View style={{ flex: 1, backgroundColor: '#202020' }}>
-			<Camera style={{ height: Dimensions.get('window').width * 4 / 3, }} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
+		<View style={styles.mainContainer}>
+			<Camera style={styles.camera} type={Camera.Constants.Type.back} ratio={"4:3"} ref={cameraRef}>
 			</Camera>
-			<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
+			<View style={styles.bottomPanel}>
 				{isPreview
-					? <View style={{ flex: 1, justifyContent: 'space-around', alignItems: 'center', flexDirection: 'row' }}>
+					? <View style={styles.controls}>
 						<TouchableOpacity onPress={saveImage}>
 							<MaterialIcons name='save' size={50} color='white' />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Save</Text>
+							<Text style={styles.buttonText}>Save</Text>
 						</TouchableOpacity><TouchableOpacity onPress={stopPreview}>
 							<MaterialIcons name='cancel' size={50} color='white' />
-							<Text style={{ color: 'white', textAlign: 'center' }}>Cancel</Text>
+							<Text style={styles.buttonText}>Cancel</Text>
 						</TouchableOpacity>
 					</View>
 					: <TouchableOpacity onPress={onSnap}>
@@ -128,5 +128,34 @@ const CameraScreen = () => {
 		</View>
 	);
 }
+
+// @refresh reset
+
+const styles = StyleSheet.create({
+	mainContainer: {
+		flex: 1,
+		backgroundColor: '#202020'
+	},
+	camera: {
+		height: Dimensions.get('window').width * 4 / 3
+	},
+	buttonText: {
+		color: 'white',
+		textAlign: 'center',
+		marginTop: 10
+	},
+	bottomPanel: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		flexDirection: 'row'
+	},
+	controls: {
+		flex: 1,
+		justifyContent: 'space-around',
+		alignItems: 'center',
+		flexDirection: 'row'
+	}
+})
 
 export default CameraScreen;

@@ -51,8 +51,7 @@ const Item = (props) => {
                     },
                     style: 'destructive'
                 },
-                // The "No" button
-                // Does nothing but dismiss the dialog when tapped
+                // The "No" button. Does nothing but dismiss the dialog when tapped
                 {
                     text: "No",
                 },
@@ -60,10 +59,10 @@ const Item = (props) => {
         );
     };
     return (
-        <View style={styles.item}>
-            <TouchableOpacity onPress={props.compare} style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+        <View style={styles.itemContainer}>
+            <TouchableOpacity onPress={props.compare} style={styles.imgAndTextContainer}>
                 <Image source={{ uri: `data:image/png;base64,${props.img}` }} style={styles.img} />
-                <Text style={{ flexGrow: 2, fontSize: 15, color: 'black', marginLeft: 20 }}>{props.date}</Text>
+                <Text style={styles.text}>{props.date}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={props.compare} activeOpacity={0.2}>
                 <MaterialIcons name="compare" size={20} color="black" style={{ paddingRight: 15 }} />
@@ -76,19 +75,29 @@ const Item = (props) => {
 }
 
 const styles = StyleSheet.create({
-    item: {
+    itemContainer: {
 		flex: 1,
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		margin: 10,
-        color: 'white',
+        color: 'black',
+        fontSize: 15,
 	},
     img: {
 		height: 50,
 		width: 50,
 		borderRadius: 5
 	},
+    imgAndTextContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    text: {
+        flexGrow: 2,
+        marginLeft: 20
+    }
 })
 
 export default Item;

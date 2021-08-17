@@ -138,11 +138,6 @@ const styles = StyleSheet.create({
 		borderTopLeftRadius: 30,
 		borderTopRightRadius: 30,
 	},
-	img: {
-		height: 50,
-		width: 50,
-		borderRadius: 5
-	},
 	addButton: {
 		flex: 1,
 		flexDirection: 'row',

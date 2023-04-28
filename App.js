@@ -46,7 +46,7 @@ export default function App() {
 					},
 					headerTintColor: 'white'
 				}} />
-				< Stack.Screen name="Compare" component={CompareScreen} options={{
+				<Stack.Screen name="Compare" component={CompareScreen} options={{
 					headerStyle: {
 						backgroundColor: '#202020',
 					},

@@ -3,13 +3,28 @@
     "name": "Photo Trap",
     "slug": "photo-trap-app",
     "icon": "./src/assets/icon.png",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "assetBundlePatterns": [
       "**/*"
     ],
     "android": {
-      "package": "com.lukasjuranek.phototrapapp"
+      "package": "com.lukasjuranek.phototrapapp",
+      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icon.png",
+        "backgroundColor": "#242424"}
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8d44d765-6e12-4da7-8bf5-d59785e7cde4"
+      }
+    },
+    "plugins": [
+      "expo-build-properties"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.lukasjuranek.phototrapapp"
     }
   },
   "name": "photo-trap-app"

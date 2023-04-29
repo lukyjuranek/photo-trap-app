@@ -10,7 +10,7 @@
     ],
     "android": {
       "package": "com.lukasjuranek.phototrapapp",
-      "versionCode": 3,
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/icon.png",
         "backgroundColor": "#242424"}

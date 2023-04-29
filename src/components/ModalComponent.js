@@ -34,9 +34,9 @@ const ModalComponent = ({ modalVisible, setModalVisible }) => {
                         Using the compare button switch between the first and second photo to see if there is a difference
                     </Text>
                     <Text style={styles.modalHeading}>Tips</Text>
-                    <Text style={styles.modalText}>To get the best results remeber the exact place where you took the photo from.</Text>
+                    <Text style={styles.modalText}>To get the best results remember the exact place where you took the photo from.</Text>
                     <Text style={styles.modalHeading}>About</Text>
-                    <Text style={styles.modalText}>Created by Lukáš Juránek in React Native{"\n"}</Text>
+                    <Text style={styles.modalText}>Created by Lukáš Juránek{"\n"}</Text>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => setModalVisible(false)} >
                         <Text style={styles.buttonText}>Close</Text>
                     </Pressable>
